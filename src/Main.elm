@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (beginnerProgram)
-import Query exposing (Query, initialModel)
+import Query exposing (..)
 import View exposing (view)
 import Messages exposing (Msg)
 
@@ -9,53 +9,48 @@ update : Msg -> Query -> Query
 update msg model = 
     case msg of
         Messages.AliasChange select alias -> 
-            let 
-                oldSelect = model.query.select
-                oldQuery = model.query
-                newQuery = 
-                    { oldQuery 
-                    | select = List.map (mapSelectItem select alias) oldSelect }
-            in
-                { model | query = newQuery } 
+            mapQuery model (mapSelectItemAlias alias select)
         Messages.FunctionChange select fn ->
-            let 
-                oldSelect = model.query.select
-                oldQuery = model.query
-                newQuery = 
-                    { oldQuery 
-                    | select = List.map (mapSelectItemFn select fn) oldSelect }
-            in
-                { model | query = newQuery }
+            mapQuery model (mapSelectItemFn fn select)
 
+mapQuery : Query -> (SelectItem -> SelectItem) -> Query
+mapQuery model mapSelectItem =
+    let 
+        oldSelect = model.query.select
+        oldQuery = model.query
+        newQuery = 
+            { oldQuery 
+            | select = List.map mapSelectItem oldSelect }
+    in
+        { model | query = newQuery }
 
-mapSelectItem : Query.SelectItem -> String -> Query.SelectItem -> Query.SelectItem
-mapSelectItem newSelectItem newAlias selectItem =
+mapSelectItemAlias : String -> SelectItem -> SelectItem -> SelectItem
+mapSelectItemAlias newAlias =
+    mapSelectItem 
+        (\se -> { se | alias =  newAlias }) 
+        (\sf -> { sf | alias = (Just newAlias) } ) 
+
+mapSelectItemFn : String -> SelectItem -> SelectItem -> SelectItem
+mapSelectItemFn newFn =
+    mapSelectItem 
+        (\se -> se) 
+        (\sf -> { sf | fn = (Just newFn) } ) 
+
+mapSelectItem : (SelectExpressionDef -> SelectExpressionDef) -> (SelectFieldDef -> SelectFieldDef) -> SelectItem -> SelectItem -> SelectItem
+mapSelectItem mapSelectExpression mapSelectField newSelectItem selectItem =
     case (selectItem, newSelectItem) of
-        (Query.SelectField oldDef, Query.SelectField newDef) -> 
+        (SelectField oldDef, SelectField newDef) -> 
             case (oldDef.alias, newDef.alias) of
-                (Just x, Just y) -> 
+                (Just _, Just _) -> 
                     if oldDef.name == newDef.name  
-                    then Query.SelectField { oldDef | alias = (Just newAlias) } 
+                    then SelectField (mapSelectField oldDef) 
                     else selectItem
                 (Nothing, _) -> selectItem
                 (_, Nothing) -> selectItem
-        (Query.SelectExpression oldDef, Query.SelectExpression newDef) ->
+        (SelectExpression oldDef, SelectExpression newDef) ->
             if oldDef.alias == newDef.alias  
-            then Query.SelectExpression { oldDef | alias =  newAlias } 
+            then SelectExpression (mapSelectExpression oldDef)  
             else selectItem
-        (_,_) -> selectItem
-
-mapSelectItemFn : Query.SelectItem -> String -> Query.SelectItem -> Query.SelectItem
-mapSelectItemFn newSelectItem newFn selectItem =
-    case (selectItem, newSelectItem) of
-        (Query.SelectField oldDef, Query.SelectField newDef) -> 
-            case (oldDef.alias, newDef.alias) of
-                (Just x, Just y) -> 
-                    if oldDef.name == newDef.name  
-                    then Query.SelectField { oldDef | fn = (Just newFn) } 
-                    else selectItem
-                (Nothing, _) -> selectItem
-                (_, Nothing) -> selectItem
         (_,_) -> selectItem
 
 main : Program Never Query Msg

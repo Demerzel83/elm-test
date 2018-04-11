@@ -110,7 +110,7 @@ initialModel =
             [ SelectField
                 { name  = "column_name"
                 , path  = Just "/path"
-                , fn    = Just "max"
+                , fn    = Just "avg"
                 , alias = Just "Test"
                 , label = Just "Label"
                 },

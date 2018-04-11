@@ -40,9 +40,7 @@ getSelectItemAlias : SelectItem -> String
 getSelectItemAlias selectItem =
     case selectItem of
         Query.SelectField def -> 
-            case def.alias of
-                Nothing -> ""
-                Just x -> x
+            Maybe.withDefault "" def.alias
         Query.SelectExpression def ->
             def.alias
 
@@ -64,6 +62,4 @@ getSelectField fn param select =
 
 getText : Maybe String -> String -> String
 getText m param =
-    case m of
-        Just x -> x
-        Nothing -> "No " ++ param
+    Maybe.withDefault ("No " ++ param) m 
