@@ -3,38 +3,57 @@ module View exposing (..)
 import Html exposing (Html, div, text, input, select, option)
 import Html.Events exposing (onInput)
 import Html.Attributes exposing (..)
-import Query exposing (Query, Select, SelectItem, SelectFieldDef)
+import Query exposing (..)
 import Messages exposing (Msg)
+import Widgets.Dropdown exposing (dropdown)
+
 
 view : Query -> Html Msg
 view query =
     div []
-        (List.map showSelect query.query.select )
+        (List.indexedMap showSelect query.query.select )
 
-showSelect : SelectItem -> Html Msg
-showSelect select =
+showSelect : Int -> SelectItem -> Html Msg
+showSelect index select =
     let
         divSelectElement = getSelectElement select
     in
-        div []
-            [ div [] [ text ("Name: "  ++ (getSelectContent select)) ],
-                divSelectElement (\def -> def.path) "Path",
-                divSelectElement (\def -> def.fn) "Fn",
-                fnSelect select,
-                divSelectElement (\def -> def.alias) "Alias",
-                div [] [ input [ type_ "text", value (getSelectItemAlias select), placeholder "Alias", onInput (Messages.AliasChange select) ] []],
-                divSelectElement (\def -> def.label) "Label"
-            ]
-
-fnSelect: SelectItem -> Html Msg
-fnSelect selectItem = 
+    case select of 
+        SelectField def ->
+            div []
+                [ div [] [ text "------------------------------------------"]
+                    , div [][ text ("Name: "  ++ (getSelectContent select)) ]
+                    , divSelectElement (\def -> def.path) "Path"
+                    , divSelectElement (\def -> def.fn) "Fn"
+                    , fnSelect index select
+                    , divSelectElement (\def -> def.alias) "Alias"
+                    , div [] [ input [ type_ "text", value (getSelectItemAlias select), placeholder "Alias", onInput (Messages.AliasChange index) ] []]
+                    , divSelectElement (\def -> def.label) "Label"
+                ]
+        SelectExpression def ->
+            div []
+                [ div [] [ text "------------------------------------------"]
+                    , div [][ text ("Name: "  ++ (getSelectContent select)) ]
+                    , div [] [ input [ type_ "text", value def.expression, placeholder "Expression", onInput (Messages.ExpressionChange index) ] []]
+                    , divSelectElement (\def -> def.alias) "Alias"
+                    , div [] [ input [ type_ "text", value def.alias, placeholder "Alias", onInput (Messages.AliasChange index) ] []]
+                    , divSelectElement (\def -> def.label) "Label"
+                ]
+fnSelect: Int -> SelectItem -> Html Msg
+fnSelect index selectItem = 
     div[] [
-        select [ onInput (Messages.FunctionChange selectItem) ] [
-            option [ value "max" ] [ text "Max"],
-            option [ value "min" ] [ text "Min"],
-            option [ value "avg" ] [ text "Average"]
-        ]
+        case selectItem of
+            SelectField field -> dnDropdown index field selectItem
+            SelectExpression _ -> text ""
     ]
+
+fnOptions : List (String, String)
+fnOptions = 
+    [ ("", ""), ("max", "Max"), ("min", "Min"), ("avg", "Average") ]
+
+dnDropdown: Int -> SelectFieldDef -> SelectItem -> Html Msg
+dnDropdown index field selectItem =
+    dropdown fnOptions (\val -> field.fn == Just val) (Messages.FunctionChange index)
 
 getSelectItemAlias : SelectItem -> String
 getSelectItemAlias selectItem =
@@ -58,7 +77,10 @@ getSelectField: (SelectFieldDef -> Maybe String) -> String -> SelectItem -> Stri
 getSelectField fn param select =
     case select of
         Query.SelectField def -> getText (fn def) param 
-        Query.SelectExpression def -> "No " ++ param ++ " for expressions"
+        Query.SelectExpression def -> 
+            if param /= "Alias"
+            then "No " ++ param ++ " for expressions"
+            else def.alias
 
 getText : Maybe String -> String -> String
 getText m param =

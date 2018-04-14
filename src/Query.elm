@@ -65,7 +65,7 @@ type alias JoinItem =
     , joinType: Maybe JoinType
     }
 
-type Joins = List JoinItem  
+type Joins = Joins (List JoinItem)  
 
 type alias FilterRuleDef a =
     { name: String
@@ -113,18 +113,29 @@ initialModel =
                 , fn    = Just "avg"
                 , alias = Just "Test"
                 , label = Just "Label"
-                },
-            SelectField
+                }
+            , SelectField
                 { name  = "column_name2"
                 , path  = Just "/path"
                 , fn    = Nothing
                 , alias = Just "Test2"
                 , label = Nothing
                 }
+            , SelectExpression
+                { expression = "SQL expression"
+                , alias = "Alias for the sql expresion"
+                , label = Just "Label for the expression"
+                }
             ]
         , order  = Nothing
         , group  = Nothing
-        , joins  = Nothing
+        , joins  = Just (Joins [   
+            { colum = "Column 666"
+            , entity = Nothing
+            , joins = Nothing
+            , joinType = Nothing
+            } 
+            ])
         , filter = Nothing
         , having = Nothing
      }
