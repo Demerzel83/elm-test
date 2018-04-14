@@ -10,9 +10,38 @@ import Widgets.Dropdown exposing (dropdown)
 
 view : Query -> Html Msg
 view query =
-    div []
-        (List.indexedMap showSelect query.query.select )
+    div [] 
+        [ div[] (text "SELECT" :: List.indexedMap showSelect query.query.select)
+        , text "_________________________________________________________"
+        , div[] [ showJoins query.query.joins ]
+        ]
 
+-- JOIN --------------------------------------------------------------
+showJoins: Maybe Joins -> Html Msg
+showJoins joins =
+    case joins of
+        Nothing -> text "No joins"
+        Just (Joins items) -> div [] 
+            (List.indexedMap showJoin items)
+
+showJoin: Int -> JoinItem -> Html Msg
+showJoin index joinItem =
+    div []
+    [ div [] [ text ("Column: " ++ joinItem.colum) ]
+    , div [] [ text (Maybe.withDefault "NoEntity" joinItem.entity) ]
+    , div [] [ 
+        case joinItem.joins of 
+            Nothing -> text "No more joins" 
+            j -> showJoins j]
+    , div [] [ 
+        case joinItem.joinType of   
+            Nothing -> text "Inner"
+            Just jtype -> case jtype of
+                Inner -> text "Inner"
+                Left -> text "Left"
+                Right -> text "Right"]]
+
+-- SELECT --------------------------------------------------------------
 showSelect : Int -> SelectItem -> Html Msg
 showSelect index select =
     let
@@ -24,18 +53,15 @@ showSelect index select =
                 [ div [] [ text "------------------------------------------"]
                     , div [][ text ("Name: "  ++ (getSelectContent select)) ]
                     , divSelectElement (\def -> def.path) "Path"
-                    , divSelectElement (\def -> def.fn) "Fn"
                     , fnSelect index select
-                    , divSelectElement (\def -> def.alias) "Alias"
                     , div [] [ input [ type_ "text", value (getSelectItemAlias select), placeholder "Alias", onInput (Messages.AliasChange index) ] []]
                     , divSelectElement (\def -> def.label) "Label"
                 ]
         SelectExpression def ->
             div []
                 [ div [] [ text "------------------------------------------"]
-                    , div [][ text ("Name: "  ++ (getSelectContent select)) ]
+                    , div [][ text "Sql expression " ]
                     , div [] [ input [ type_ "text", value def.expression, placeholder "Expression", onInput (Messages.ExpressionChange index) ] []]
-                    , divSelectElement (\def -> def.alias) "Alias"
                     , div [] [ input [ type_ "text", value def.alias, placeholder "Alias", onInput (Messages.AliasChange index) ] []]
                     , divSelectElement (\def -> def.label) "Label"
                 ]

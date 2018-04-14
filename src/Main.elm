@@ -7,13 +7,16 @@ import Messages exposing (Msg)
 
 update : Msg -> Query -> Query
 update msg model = 
-    case msg of
-        Messages.AliasChange index alias -> 
-            mapQuery model (mapSelectItem index (mapSelectItemAlias alias))
-        Messages.FunctionChange index fn ->
-            mapQuery model (mapSelectItem index (mapSelectItemFn fn))
-        Messages.ExpressionChange index expression ->
-            mapQuery model (mapSelectItem index (mapSelectItemExp expression))
+    let
+        mapModel = mapQuery model
+    in
+        case msg of
+            Messages.AliasChange index alias -> 
+                mapModel (mapSelectItem index (mapSelectItemAlias alias))
+            Messages.FunctionChange index fn ->
+                mapModel (mapSelectItem index (mapSelectItemFn fn))
+            Messages.ExpressionChange index expression ->
+                mapModel (mapSelectItem index (mapSelectItemExp expression))
 
 mapQuery : Query -> (Int -> SelectItem -> SelectItem) -> Query
 mapQuery model mapSelectItem =
@@ -36,14 +39,14 @@ mapSelectItemAlias newAlias selectItem =
 mapSelectItemFn : String -> SelectItem -> SelectItem
 mapSelectItemFn newFn selectItem =
     case selectItem of
-        SelectExpression se -> SelectExpression se 
         SelectField sf -> SelectField { sf | fn = (Just newFn) }
+        se -> se 
 
 mapSelectItemExp : String -> SelectItem -> SelectItem
 mapSelectItemExp newExp selectItem =
     case selectItem of
         SelectExpression se -> SelectExpression { se | expression = newExp } 
-        SelectField sf -> SelectField sf
+        sf -> sf
 
 mapSelectItem : Int -> (SelectItem -> SelectItem) -> Int -> SelectItem -> SelectItem
 mapSelectItem indexChanged mapSelectItem index oldSelectItem =

@@ -132,7 +132,19 @@ initialModel =
         , joins  = Just (Joins [   
             { colum = "Column 666"
             , entity = Nothing
-            , joins = Nothing
+            , joins = Just (Joins [   
+                { colum = "Column 999"
+                , entity = Just "My Entity"
+                , joins = Just (Joins [   
+                    { colum = "Column 888"
+                    , entity = Just "More entity"
+                    , joins = Nothing
+                    , joinType = Just Left
+                    } 
+                    ])
+                , joinType = Just Right
+                } 
+                ])
             , joinType = Nothing
             } 
             ])
