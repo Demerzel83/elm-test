@@ -17,6 +17,14 @@ update msg model =
                 mapModel (mapSelectItem index (mapSelectItemFn fn))
             Messages.ExpressionChange index expression ->
                 mapModel (mapSelectItem index (mapSelectItemExp expression))
+            Messages.JoinChange joinItem join -> 
+                let 
+                    newJoins = mapJoinItem model.query.joins joinItem join
+                    oldQuery = model.query
+                    newQuery = { oldQuery | joins = newJoins}
+                in
+                    { model | query = newQuery}
+
 
 mapQuery : Query -> (Int -> SelectItem -> SelectItem) -> Query
 mapQuery model mapSelectItem =
@@ -29,6 +37,25 @@ mapQuery model mapSelectItem =
             | select = newSelect }
     in
         { model | query = newQuery }
+
+mapJoinItem : Maybe Joins -> JoinItem -> String -> Maybe Joins
+mapJoinItem joins joinItem joinType =
+    case joins of
+        Nothing -> Just (Joins [{ colum = "test", joinType = (Just Left), entity = Nothing, joins = Nothing }])
+        Just (Joins jns) -> Just (Joins (List.map (\j -> 
+            if j == joinItem 
+            then { j | joinType = (Just (mapJoinType joinType)) } 
+            else case j.joins of
+                Nothing -> j
+                jns -> {j | joins = (mapJoinItem jns joinItem joinType)} ) jns))
+
+mapJoinType : String -> JoinType
+mapJoinType joinType =
+    case joinType of
+        "Inner" -> Inner
+        "Right" -> Right
+        "Left" -> Left
+        _ -> Inner
 
 mapSelectItemAlias : String -> SelectItem -> SelectItem
 mapSelectItemAlias newAlias selectItem =

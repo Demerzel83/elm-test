@@ -14,6 +14,9 @@ view query =
         [ div[] (text "SELECT" :: List.indexedMap showSelect query.query.select)
         , text "_________________________________________________________"
         , div[] [ showJoins query.query.joins ]
+        , text "_________________________________________________________"
+        , text "_________________________________________________________"
+        , text (toString  query.query.joins)
         ]
 
 -- JOIN --------------------------------------------------------------
@@ -36,11 +39,16 @@ showJoin index joinItem =
     , div [] [ 
         case joinItem.joinType of   
             Nothing -> text "Inner"
-            Just jtype -> case jtype of
-                Inner -> text "Inner"
-                Left -> text "Left"
-                Right -> text "Right"]]
-
+            Just jtype -> 
+                (dropdown 
+                    [("Inner", "Inner"), ("Left", "Left") , ("Right", "Right")] 
+                    (\o -> case jtype of
+                            Inner -> o == "Inner"
+                            Left -> o == "Left"
+                            Right -> o  == "Right") 
+                    (Messages.JoinChange joinItem)) ]]
+            
+            
 -- SELECT --------------------------------------------------------------
 showSelect : Int -> SelectItem -> Html Msg
 showSelect index select =
