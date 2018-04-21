@@ -67,24 +67,24 @@ type alias JoinItem =
 
 type Joins = Joins (List JoinItem)  
 
-type alias FilterRuleDef a =
+type alias FilterRuleDef =
     { name: String
     , path: Maybe String
     , op: String
     , fn: Maybe String
-    , value: a
+    , value: Maybe String 
     }
 
-type alias FilterAndDef a =
-    { and: List Filter a }
+type alias FilterAndDef =
+    { and: List Filter }
 
-type alias FilterOrDef a =
-    { or: List Filter a }
+type alias FilterOrDef  =
+    { or: List Filter }
 
-type Filter a
-    = FilterRule (FilterRuleDef a)
-    | FilterAnd (FilterAndDef a)
-    | FilterOr (FilterOrDef a)
+type Filter 
+    = FilterRule FilterRuleDef 
+    | FilterAnd FilterAndDef 
+    | FilterOr FilterOrDef 
 
 type Having = Filter
 
@@ -101,6 +101,28 @@ type alias Query =
     { entity : String
     , query: QueryPart
     }
+
+getFilter : Maybe Filter 
+getFilter = 
+       Just (FilterAnd {
+           and = [
+               FilterRule (
+                    { name = "description"
+                    , path = Nothing
+                    , op = "eq"
+                    , fn = Nothing
+                    , value = Just "lalala"
+                    }),
+                FilterRule (
+                    { name = "description2"
+                    , path = Nothing
+                    , op = "eq"
+                    , fn = Nothing
+                    , value = Just "1"
+                    }) 
+           ] 
+       })
+           
 
 initialModel : Query
 initialModel = 
@@ -154,7 +176,7 @@ initialModel =
             , joinType = Nothing
             } 
             ])
-        , filter = Nothing
+        , filter = getFilter
         , having = Nothing
      }
     }

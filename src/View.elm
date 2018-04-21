@@ -11,21 +11,61 @@ import Widgets.Dropdown exposing (dropdown)
 view : Query -> Html Msg
 view query =
     div [] 
-        [ div[] (text "SELECT" :: List.indexedMap showSelect query.query.select)
-        , text "_________________________________________________________"
-        , div[] [ showJoins query.query.joins ]
-        , text "_________________________________________________________"
-        , text "_________________________________________________________"
-        , text (toString  query.query.joins)
+        [ div [] (text "SELECT" :: List.indexedMap showSelect query.query.select)
+        , text "JOIN______________________________________________________"
+        , div [] [ showJoins query.query.joins ]
+        , text "FILTER____________________________________________________"
+        , div [] [ showFilter query.query.filter ]
         ]
+
+-- FILTER -----------------------------------------------------------
+showFilter: Maybe Filter -> Html Msg
+showFilter filter =
+    case filter of
+        Nothing -> text "No Filter"
+        Just f -> parseFilter f
+
+parseFilter: Filter -> Html Msg
+parseFilter filter =
+    case filter of
+        FilterRule filterRuleDef -> showFilterRuleDef filterRuleDef 
+        FilterAnd filterAndDef -> showFilterAnd filterAndDef
+        FilterOr filterOrDef -> showFilterOr filterOrDef
+
+showFilterAnd: FilterAndDef -> Html Msg
+showFilterAnd { and } =
+    div [] (List.map parseFilter and)
+
+showFilterOr: FilterOrDef -> Html Msg
+showFilterOr { or } =
+    div [] (List.map parseFilter or)
+
+showFilterRuleDef : FilterRuleDef -> Html Msg
+showFilterRuleDef filteRuleDef =
+    let 
+        { name, path, op, fn, value } = filteRuleDef 
+    in
+        div [] 
+            [ text ("Name: " ++ name)
+            , text (" Operation: " ++ op)
+            , text (" Path: " ++ (toString path))
+            , text (" fn: " ++ (toString fn))
+            , showInputValue filteRuleDef
+            ]
+
+showInputValue: FilterRuleDef -> Html Msg
+showInputValue filteRuleDef =
+    case filteRuleDef.value of
+        Nothing -> text "No value"
+        Just val -> input [ type_ "text", value val, placeholder "Value", onInput (Messages.FilterValueChange filteRuleDef)] []
+
 
 -- JOIN --------------------------------------------------------------
 showJoins: Maybe Joins -> Html Msg
 showJoins joins =
     case joins of
         Nothing -> text "No joins"
-        Just (Joins items) -> div [] 
-            (List.indexedMap showJoin items)
+        Just (Joins items) -> div [] (List.indexedMap showJoin items)
 
 showJoin: Int -> JoinItem -> Html Msg
 showJoin index joinItem =

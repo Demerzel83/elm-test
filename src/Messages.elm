@@ -6,3 +6,4 @@ type Msg
     | FunctionChange Int String
     | ExpressionChange Int String
     | JoinChange JoinItem  String
+    | FilterValueChange FilterRuleDef String
